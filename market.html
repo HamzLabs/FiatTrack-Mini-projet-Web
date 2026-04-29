@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marché — FiatTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+<div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+<div class="ticker-bar" role="marquee" aria-label="Taux de change">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+
+<nav class="main-nav" aria-label="Navigation principale">
+  <div class="nav-inner">
+      <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="FiatTrack Logo" class="logo-icon">
+          FiatTrack
+      </a>    
+      <ul class="nav-links">
+      <li><a href="index.html"     data-i18n="nav.home">Accueil</a></li>
+      <li><a href="market.html" class="active" data-i18n="nav.market">Marché</a></li>
+      <li><a href="converter.html" data-i18n="nav.converter">Convertisseur</a></li>
+      <li><a href="about.html"     data-i18n="nav.about">À propos</a></li>
+      <li><a href="contact.html"   data-i18n="nav.contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-switcher" aria-label="Langue">
+        <button class="lang-btn" data-lang="fr">FR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ar">AR</button>
+      </div>
+      <button class="btn-icon" id="theme-toggle" aria-label="Thème"><i class="fa-solid fa-sun"></i></button>
+      <button class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="index.html"     data-i18n="nav.home">Accueil</a>
+  <a href="market.html" class="active" data-i18n="nav.market">Marché</a>
+  <a href="converter.html" data-i18n="nav.converter">Convertisseur</a>
+  <a href="about.html"     data-i18n="nav.about">À propos</a>
+  <a href="contact.html"   data-i18n="nav.contact">Contact</a>
+  <div class="mobile-lang">
+    <button class="lang-btn" data-lang="fr">FR</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ar">AR</button>
+  </div>
+</div>
+
+<!-- CHART MODAL -->
+<div class="chart-modal-overlay" id="chart-modal-overlay" role="dialog" aria-modal="true">
+  <div class="chart-modal">
+    <div class="chart-modal-header">
+      <div class="chart-modal-title">
+        <div class="chart-modal-flag" id="modal-flag">🇺🇸</div>
+        <div class="chart-modal-name">
+          <h2 id="modal-name">USD</h2>
+          <p id="modal-fullname">Dollar Américain</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="chart-modal-price">
+          <div class="price" id="modal-price">1.0000</div>
+          <div class="change" id="modal-change">+0.00%</div>
+        </div>
+        <button class="chart-close" id="chart-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="chart-period-tabs">
+      <button class="active" data-period="1">24h</button>
+      <button data-period="7">7J</button>
+      <button data-period="30">30J</button>
+      <button data-period="90">90J</button>
+    </div>
+    <div class="chart-body">
+      <div class="chart-canvas-wrap" style="height:260px">
+        <canvas id="modal-chart"></canvas>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.74rem;color:var(--text-muted);padding:0 0 16px;font-family:var(--font-mono)" data-i18n="market.simNote">
+      Données simulées — usage éducatif
+    </div>
+  </div>
+</div>
+
+<main>
+  <section class="container">
+    <div class="page-header">
+      <h1><span class="live-dot"></span><span data-i18n="market.title">Marché des devises</span></h1>
+      <p data-i18n="market.sub">Prix en temps réel via API publique. Cliquez sur une ligne pour voir le graphique détaillé.</p>
+    </div>
+
+    <div class="stats-row" id="stats-row">
+      <div class="stat-mini"><div class="label" data-i18n="stats.currencies">Devises</div><div class="val" id="s-total">—</div></div>
+      <div class="stat-mini"><div class="label" data-i18n="stats.up">En hausse</div><div class="val up" id="s-up">—</div></div>
+      <div class="stat-mini"><div class="label" data-i18n="stats.down">En baisse</div><div class="val down" id="s-down">—</div></div>
+      <div class="stat-mini"><div class="label" data-i18n="stats.lastUpdate">Dernière MAJ</div><div class="val" id="s-time" style="font-size:1rem">—</div></div>
+    </div>
+
+    <div class="market-controls">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="market-search" data-i18n-placeholder="market.searchPlaceholder" placeholder="Rechercher une devise…" aria-label="Rechercher">
+      </div>
+      <select class="filter-select" id="market-sort" aria-label="Trier">
+        <option value="code_asc"    data-i18n="market.sortCodeAZ">Code A–Z</option>
+        <option value="code_desc"   data-i18n="market.sortCodeZA">Code Z–A</option>
+        <option value="rate_asc"    data-i18n="market.sortRateAsc">Taux croissant</option>
+        <option value="rate_desc"   data-i18n="market.sortRateDesc">Taux décroissant</option>
+        <option value="change_desc" data-i18n="market.sortChangeDesc">Variation ↑</option>
+        <option value="change_asc"  data-i18n="market.sortChangeAsc">Variation ↓</option>
+      </select>
+      <button class="btn-fav-filter" id="fav-filter">
+        <i class="fa-solid fa-star"></i> <span data-i18n="market.favorites">Favoris</span>
+      </button>
+      <div class="refresh-info">
+        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
+        <span data-i18n="market.refreshIn">Actualisation dans</span> <span id="refresh-countdown">30</span>s
+      </div>
+    </div>
+
+    <div class="market-table-wrap">
+      <table class="market-table">
+        <thead>
+          <tr>
+            <th style="width:44px"></th>
+            <th style="width:56px"></th>
+            <th class="sortable" data-sort="code_asc"    data-i18n="market.colCurrency">Devise</th>
+            <th data-i18n="market.colSymbol">Symbole</th>
+            <th class="sortable" data-sort="rate_desc"   data-i18n="market.colRate">Taux (USD)</th>
+            <th class="sortable" data-sort="change_desc" data-i18n="market.colChange">Variation 24h</th>
+            <th data-i18n="market.colTrend">Tendance</th>
+            <th style="width:80px" data-i18n="market.colChart">Graphique</th>
+          </tr>
+        </thead>
+        <tbody id="market-tbody">
+          <tr><td colspan="8" style="padding:48px;text-align:center;color:var(--text-muted)">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.4rem;margin-bottom:12px;display:block"></i>
+            <span data-i18n="market.loading">Chargement des prix en direct…</span>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="text-align:center;color:var(--text-muted);font-size:.78rem;margin:16px 0 60px;font-family:var(--font-mono)">
+      Source: Open Exchange Rates (fallback simulé) · <span id="api-source">—</span>
+    </p>
+  </section>
+</main>
+
+<footer class="main-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+      <a href="index.html" class="logo">
+          <img src="images/logo.png" alt="FiatTrack Logo" class="logo-icon">
+          FiatTrack
+      </a>        
+      <p data-i18n="footer.desc">Plateforme éducative de suivi des devises fiat. Données simulées à des fins de démonstration.</p>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.nav">Navigation</h4>
+        <ul>
+          <li><a href="index.html"     data-i18n="nav.home">Accueil</a></li>
+          <li><a href="market.html"    data-i18n="nav.market">Marché</a></li>
+          <li><a href="converter.html" data-i18n="nav.converter">Convertisseur</a></li>
+          <li><a href="about.html"     data-i18n="nav.about">À propos</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer.popular">Devises populaires</h4>
+        <ul>
+          <li><a href="#">USD — <span data-i18n="currencyNames.USD">Dollar Américain</span></a></li>
+          <li><a href="#">EUR — <span data-i18n="currencyNames.EUR">Euro</span></a></li>
+          <li><a href="#">MAD — <span data-i18n="currencyNames.MAD">Dirham Marocain</span></a></li>
+          <li><a href="#">GBP — <span data-i18n="currencyNames.GBP">Livre Sterling</span></a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer.copy">© 2025 FiatTrack. Tous droits réservés. Données simulées — usage éducatif uniquement.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/i18n.js"></script>
+<script src="js/currencydata.js"></script>
+<script src="js/app.js"></script>
+<script src="js/market.js"></script>
+</body>
+</html>
